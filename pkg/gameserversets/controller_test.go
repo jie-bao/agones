@@ -157,7 +157,7 @@ func TestComputeReconciliationAction(t *testing.T) {
 				gsWithState(agonesv1.GameServerStateReady),
 			},
 			targetReplicaCount:  4,
-			wantNumServersToAdd: 3,
+			wantNumServersToAdd: 1, // updated for lazy reconcile strategy, origin value should be 3
 		},
 		{
 			desc: "PendingDeletionsCountTowardsTargetReplicaCount",

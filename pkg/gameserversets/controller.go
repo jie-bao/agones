@@ -363,7 +363,7 @@ func computeReconciliationAction(strategy apis.SchedulingStrategy, list []*agone
 	// track the number of pods that are being created at any given moment by the GameServerSet
 	// so we can limit it at a throughput that Kubernetes can handle
 	var podPendingCount int // podPending == "up" but don't have a Pod running yet
-
+	var isBeingDeletedCount int
 	var potentialDeletions []*agonesv1.GameServer
 	var toDelete []*agonesv1.GameServer
 
@@ -399,6 +399,7 @@ func computeReconciliationAction(strategy apis.SchedulingStrategy, list []*agone
 
 		// GS being deleted don't count.
 		if gs.IsBeingDeleted() {
+			isBeingDeletedCount++
 			continue
 		}
 
@@ -437,6 +438,11 @@ func computeReconciliationAction(strategy apis.SchedulingStrategy, list []*agone
 
 	if upCount < targetReplicaCount {
 		numServersToAdd = targetReplicaCount - upCount
+		// temp workaround, we won't create new replacements until game servers being deleted are fully deleted
+		numServersToAdd -= isBeingDeletedCount
+		if numServersToAdd < 0 {
+			numServersToAdd = 0
+		}
 		originalNumServersToAdd := numServersToAdd
 
 		if numServersToAdd > maxCreations {
